@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+</head>
+
+<body>
+    <script>
+
+        const streamId = "stream1";
+        const source = 'rtsp://admin:hzhr@123@192.98.233.204:554/h264/ch1/main/av_stream'; // this is 265
+
+        const params = {
+            "runOnInit": `
+                ffmpeg -rtsp_transport tcp -i ${source} \
+                -c:v libx264 -b:v 1024k -preset ultrafast \
+                -bf 0 \
+                -f rtsp rtsp://localhost:8554/${streamId}`,
+            "runOnReadRestart": true,
+        }
+
+        console.log(params);
+        const requestOptions = {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(params),
+        };
+        fetch(
+            `http://localhost:9997/v3/config/paths/add/${streamId}`,
+            requestOptions
+        ).then(res => {
+            const div = document.createElement("div");
+            div.innerHTML = `
+            <iframe src="http://localhost:8888/${streamId}" scrolling="no"></iframe>
+            `
+            document.body.appendChild(div);
+        })
+
+    </script>
+
+</body>
+
+</html>
