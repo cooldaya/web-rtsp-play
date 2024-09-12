@@ -13,7 +13,7 @@
 
 <script setup>
 import HlsJS from "hls.js";
-import { ref, onMounted, onBeforeMount } from "vue";
+import { ref, onMounted, onBeforeMount,watch } from "vue";
 const props = defineProps({
   url: {
     type: String,
@@ -113,6 +113,7 @@ const tools = {
 const vElRef = ref(null);
 
 const initVideo = async () => {
+  if (!props.url) return;
   if (HlsJS.isSupported()) {
     const vEl = vElRef.value;
     const m3u8Url = await tools.getStreamUrl(props.url);
@@ -122,6 +123,9 @@ const initVideo = async () => {
   }
 };
 
+watch(()=>props.url,()=>{
+  initVideo();
+})
 onMounted(() => {
   initVideo();
 });
