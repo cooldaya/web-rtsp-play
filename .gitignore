@@ -2,4 +2,5 @@ ffmpeg-win64/bin
 ffmpeg-win64/doc
 mediamtx_v1.9.0_windows_amd64/mediamtx.exe
 
-envs/
+envs/windows/mediamtx.exe
+envs/windows/ffmpeg.exe
