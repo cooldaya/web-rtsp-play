@@ -1,10 +1,21 @@
-const server_url = window.trans_rtsp_server || "http://localhost";
+const trans_host = window.trans_host || "localhost";
+const server_url = `http://${trans_host}`;
 const api_server = `${server_url}:9997`; // rtsp转流服务地址
 const stream_server = `${server_url}:8888`; // 转流服务结果地址
 
+const trans_token = (() => {
+  const username = "kt"; // 在配置文件中
+  const password = "123";
+  return "Basic " + btoa(username + ":" + password);
+})();
+
 const reqs = {
   getOnePath: async (streamId) => {
-    return await fetch(`${api_server}/v3/paths/get/${streamId}`);
+    return await fetch(`${api_server}/v3/paths/get/${streamId}`, {
+      headers: {
+        Authorization: trans_token,
+      },
+    });
   },
   setOnePath: async (streamId, source, toh264 = false) => {
     // 当需要转h264时，需要服务端支持ffmpeg转码环境，并通过8554端口发送到 mediamtx管理
@@ -14,7 +25,7 @@ const reqs = {
             ffmpeg -rtsp_transport tcp -i ${source} \
             -c:v libx264 -b:v 1024k -preset ultrafast \
             -bf 0 \
-            -f rtsp rtsp://localhost:8554/${streamId}`,
+            -f rtsp rtsp://${trans_host}:8554/${streamId}`,
           runOnReadRestart: true,
         }
       : { source };
@@ -23,7 +34,9 @@ const reqs = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: trans_token,
       },
+
       body: JSON.stringify(payload),
     };
     const res = await fetch(
@@ -33,7 +46,11 @@ const reqs = {
     return res;
   },
   delOnePath: async (streamId) => {
-    fetch(`${api_server}/v3/config/paths/delete/${streamId}`);
+    fetch(`${api_server}/v3/config/paths/delete/${streamId}`, {
+      headers: {
+        Authorization: trans_token,
+      },
+    });
   },
 };
 

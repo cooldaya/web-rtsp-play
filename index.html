@@ -11,6 +11,14 @@
 <body>
     <script>
 
+        const trans_token = (() => {
+            const username = 'kt';
+            const password = '123';
+            return 'Basic ' + btoa(username + ':' + password);
+        })()
+
+        const trans_server = "localhost";
+
         const streamId = "stream1";
         const source = 'rtsp://admin:hzhr@123@192.98.233.204:554/h264/ch1/main/av_stream'; // this is 265
 
@@ -19,7 +27,7 @@
                 ffmpeg -rtsp_transport tcp -i ${source} \
                 -c:v libx264 -b:v 1024k -preset ultrafast \
                 -bf 0 \
-                -f rtsp rtsp://localhost:8554/${streamId}`,
+                -f rtsp rtsp://${trans_server}:8554/${streamId}`,
             "runOnReadRestart": true,
         }
 
@@ -28,16 +36,17 @@
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                'Authorization': trans_token
             },
             body: JSON.stringify(params),
         };
         fetch(
-            `http://localhost:9997/v3/config/paths/add/${streamId}`,
+            `http://${trans_server}:9997/v3/config/paths/add/${streamId}`,
             requestOptions
         ).then(res => {
             const div = document.createElement("div");
             div.innerHTML = `
-            <iframe src="http://localhost:8888/${streamId}" scrolling="no"></iframe>
+            <iframe src="http://${trans_server}:8888/${streamId}" scrolling="no"></iframe>
             `
             document.body.appendChild(div);
         })

@@ -13,7 +13,7 @@
 
 <script setup>
 import HlsJS from "hls.js";
-import { ref, onMounted, onBeforeMount,watch } from "vue";
+import { ref, onMounted, onBeforeMount, watch } from "vue";
 const props = defineProps({
   url: {
     type: String,
@@ -25,8 +25,15 @@ const props = defineProps({
   },
 });
 
-const api_server = "http://localhost:9997"; // rtsp转流服务地址
-const stream_server = "http://localhost:8888"; // 转流服务结果地址
+const trans_host = window.trans_host || "localhost";
+const server_url = `http://${trans_host}`;
+const api_server = `${server_url}:9997`; // rtsp转流服务地址
+const stream_server = `${server_url}:8888`; // 转流服务结果地址
+const trans_token = (() => {
+  const username = "kt"; // 在配置文件中
+  const password = "123";
+  return "Basic " + btoa(username + ":" + password);
+})();
 
 const tools = {
   hashCode(str) {
@@ -64,7 +71,11 @@ const tools = {
 
   reqs: {
     getOnePath: async (streamId) => {
-      return await fetch(`${api_server}/v3/paths/get/${streamId}`);
+      return await fetch(`${api_server}/v3/paths/get/${streamId}`, {
+        headers: {
+          Authorization: trans_token,
+        },
+      });
     },
     setOnePath: async (streamId, source) => {
       // 当需要转h264时，需要服务端支持ffmpeg转码环境，并通过8554端口发送到 mediamtx管理
@@ -74,7 +85,7 @@ const tools = {
             ffmpeg -rtsp_transport tcp -i ${source} \
             -c:v libx264 -b:v 1024k -preset ultrafast \
             -bf 0 \
-            -f rtsp rtsp://localhost:8554/${streamId}`,
+            -f rtsp rtsp://${trans_host}:8554/${streamId}`,
             runOnReadRestart: true,
           }
         : { source };
@@ -83,6 +94,8 @@ const tools = {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+
+          Authorization: trans_token,
         },
         body: JSON.stringify(payload),
       };
@@ -93,7 +106,11 @@ const tools = {
       return res;
     },
     delOnePath: async (streamId) => {
-      fetch(`${api_server}/v3/config/paths/delete/${streamId}`);
+      fetch(`${api_server}/v3/config/paths/delete/${streamId}`, {
+        headers: {
+          Authorization: trans_token,
+        },
+      });
     },
   },
 
@@ -123,9 +140,12 @@ const initVideo = async () => {
   }
 };
 
-watch(()=>props.url,()=>{
-  initVideo();
-})
+watch(
+  () => props.url,
+  () => {
+    initVideo();
+  }
+);
 onMounted(() => {
   initVideo();
 });
@@ -140,5 +160,6 @@ onBeforeMount(() => {
   width: 100%;
   height: 100%;
   object-fit: fill;
+  background-color: black;
 }
 </style>
